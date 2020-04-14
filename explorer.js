@@ -28,6 +28,12 @@ const $tb = $('#s3objects-table');
 const $bc = $('#breadcrumb');
 const $bl = $('#bucket-loader');
 
+// const waBaseUrl = "https://fabrik.waclothing.me/wa?wireframe=true&drape=true&heatmap=true&hotspot=true&transparent=true&screenshot=true&";
+const waBaseUrl = "https://fabrik.waclothing.me/wa?hotspot=edit&";
+const waBucket = "wa-dump";
+let api = '';
+let secret = '';
+
 // Map S3 storage types to text
 const mapStorage = {
     STANDARD: 'Standard',
@@ -135,6 +141,13 @@ function stripLeadTrailSlash(s) {
     return s.replace(/^\/+/g, '').replace(/\/+$/g, '');
 }
 
+function getWAURL(key) {
+    folder = key.split('/')[0];
+    file = key.split('/')[1].split('.')[0];
+    DEBUG.log(folder, file);
+    return `${waBaseUrl}api=${api}&secret=${secret}&${folder}=${file}`;
+}
+
 //
 // Shared service that all controllers can use
 //
@@ -162,6 +175,9 @@ function SharedService($rootScope) {
         this.settings = settings;
         this.viewprefix = null;
         $.fn.dataTableExt.afnFiltering.length = 0;
+
+        api = settings.cred.accessKeyId;
+        secret = settings.cred.secretAccessKey;
 
         // AWS.config.update(settings.cred);
         // AWS.config.update({ region: settings.region });
@@ -304,27 +320,11 @@ function ViewController($scope, SharedService) {
         if (target.dataset.s3 === 'folder') {
             // User has clicked on a folder so navigate into that folder
             SharedService.changeViewPrefix(target.dataset.s3key);
-        } else if ($scope.view.settings.auth === 'anon') {
+        } else {
             // Unauthenticated user has clicked on an object so download it
             // in new window/tab
-            window.open(target.href, '_blank');
-        } else {
-            // Authenticated user has clicked on an object so create pre-signed
-            // URL and download it in new window/tab
-            const s3 = new AWS.S3();
-            const params = {
-                Bucket: $scope.view.settings.bucket, Key: target.dataset.s3key, Expires: 15,
-            };
-            DEBUG.log('params:', params);
-            s3.getSignedUrl('getObject', params, (err, url) => {
-                if (err) {
-                    DEBUG.log('err:', err);
-                    SharedService.showError(params, err);
-                } else {
-                    DEBUG.log('url:', url);
-                    window.open(url, '_blank');
-                }
-            });
+            url = getWAURL(target.dataset.s3key);
+            window.open(url, '_blank');
         }
         return false;
     });
@@ -923,7 +923,7 @@ function SettingsController($scope, SharedService) {
     // Initialized for an unauthenticated user exploring the current bucket
     // TODO: calculate current bucket and initialize below
     $scope.settings = {
-        auth: 'anon', region: '', bucket: '', entered_bucket: '', selected_bucket: '', view: 'folder', delimiter: '/', prefix: '',
+        auth: 'auth', region: '', bucket: '', entered_bucket: '', selected_bucket: '', view: 'folder', delimiter: '/', prefix: '',
     };
     $scope.settings.mfa = { use: 'no', code: '' };
     $scope.settings.cred = { accessKeyId: '', secretAccessKey: '', sessionToken: '' };
@@ -936,7 +936,7 @@ function SettingsController($scope, SharedService) {
     $scope.update = () => {
         DEBUG.log('Settings updated');
         $('#SettingsModal').modal('hide');
-        $scope.settings.bucket = $scope.settings.selected_bucket || $scope.settings.entered_bucket;
+        $scope.settings.bucket = waBucket;
 
         // If manually entered bucket then add it to list of buckets for future
         if ($scope.settings.entered_bucket) {
