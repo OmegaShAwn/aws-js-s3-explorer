@@ -324,7 +324,7 @@ function ViewController($scope, SharedService) {
             // Unauthenticated user has clicked on an object so download it
             // in new window/tab
             url = getWAURL(target.dataset.s3key);
-            window.open(url, '_blank');
+            window.open(url, '_blank', 'modal=yes');
         }
         return false;
     });
