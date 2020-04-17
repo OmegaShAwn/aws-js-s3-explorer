@@ -29,7 +29,7 @@ const $bc = $('#breadcrumb');
 const $bl = $('#bucket-loader');
 
 // const waBaseUrl = "https://fabrik.waclothing.me/wa?wireframe=true&drape=true&heatmap=true&hotspot=true&transparent=true&screenshot=true&";
-const waBaseUrl = "https://fabrik.waclothing.me/wa?hotspot=edit&";
+const waBaseUrl = "http://fabrik.waclothing.me/wa?hotspot=edit&";
 const waBucket = "wa-dump";
 let api = '';
 let secret = '';
